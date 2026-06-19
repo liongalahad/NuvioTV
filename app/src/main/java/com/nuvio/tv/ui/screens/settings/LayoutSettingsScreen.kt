@@ -65,9 +65,11 @@ import com.nuvio.tv.core.build.AppFeaturePolicy
 import com.nuvio.tv.core.streams.STREAM_BADGE_IMPORT_LIMIT
 import com.nuvio.tv.core.streams.StreamBadgePlacement
 import com.nuvio.tv.domain.model.ContinueWatchingSortMode
+import com.nuvio.tv.domain.model.DetailImdbRatingsVisibility
 import com.nuvio.tv.domain.model.DiscoverLocation
 import com.nuvio.tv.domain.model.FocusedPosterTrailerPlaybackTarget
 import com.nuvio.tv.domain.model.HomeLayout
+import com.nuvio.tv.domain.model.HomeImdbRatingsVisibility
 import com.nuvio.tv.ui.components.ClassicLayoutPreview
 import com.nuvio.tv.ui.components.GridLayoutPreview
 import com.nuvio.tv.ui.components.ModernLayoutPreview
@@ -93,6 +95,7 @@ private enum class LayoutSettingsSection {
     HOME_LAYOUT,
     HOME_CONTENT,
     DETAIL_PAGE,
+    IMDB_RATINGS,
     STREAMS,
     CONTINUE_WATCHING,
     FOCUSED_POSTER,
@@ -112,16 +115,20 @@ fun LayoutSettingsContent(
     var homeLayoutExpanded by rememberSaveable(essentialMode) { mutableStateOf(essentialMode) }
     var homeContentExpanded by rememberSaveable { mutableStateOf(false) }
     var detailPageExpanded by rememberSaveable { mutableStateOf(false) }
+    var imdbRatingsExpanded by rememberSaveable { mutableStateOf(false) }
     var streamsExpanded by rememberSaveable { mutableStateOf(false) }
     var continueWatchingExpanded by rememberSaveable { mutableStateOf(false) }
     var focusedPosterExpanded by rememberSaveable { mutableStateOf(false) }
     var posterCardStyleExpanded by rememberSaveable { mutableStateOf(false) }
     var showCwSortModeDialog by rememberSaveable { mutableStateOf(false) }
     var showStreamBadgePositionDialog by rememberSaveable { mutableStateOf(false) }
+    var showHomeImdbRatingsDialog by rememberSaveable { mutableStateOf(false) }
+    var showDetailImdbRatingsDialog by rememberSaveable { mutableStateOf(false) }
 
     val defaultHomeLayoutHeaderFocus = remember { FocusRequester() }
     val homeContentHeaderFocus = remember { FocusRequester() }
     val detailPageHeaderFocus = remember { FocusRequester() }
+    val imdbRatingsHeaderFocus = remember { FocusRequester() }
     val streamsHeaderFocus = remember { FocusRequester() }
     val continueWatchingHeaderFocus = remember { FocusRequester() }
     val focusedPosterHeaderFocus = remember { FocusRequester() }
@@ -144,6 +151,11 @@ fun LayoutSettingsContent(
     LaunchedEffect(detailPageExpanded, focusedSection) {
         if (!detailPageExpanded && focusedSection == LayoutSettingsSection.DETAIL_PAGE) {
             detailPageHeaderFocus.requestFocus()
+        }
+    }
+    LaunchedEffect(imdbRatingsExpanded, focusedSection) {
+        if (!imdbRatingsExpanded && focusedSection == LayoutSettingsSection.IMDB_RATINGS) {
+            imdbRatingsHeaderFocus.requestFocus()
         }
     }
     LaunchedEffect(streamsExpanded, focusedSection) {
@@ -542,6 +554,32 @@ fun LayoutSettingsContent(
                 }
             }
 
+            item(key = "imdb_ratings_section") {
+                CollapsibleSectionCard(
+                    title = stringResource(R.string.layout_section_imdb_ratings),
+                    description = stringResource(R.string.layout_section_imdb_ratings_desc),
+                    expanded = imdbRatingsExpanded,
+                    onToggle = { imdbRatingsExpanded = !imdbRatingsExpanded },
+                    focusRequester = imdbRatingsHeaderFocus,
+                    onFocused = { focusedSection = LayoutSettingsSection.IMDB_RATINGS }
+                ) {
+                    SettingsActionRow(
+                        title = stringResource(R.string.layout_imdb_ratings_home),
+                        subtitle = stringResource(R.string.layout_imdb_ratings_home_sub),
+                        value = homeImdbRatingsVisibilityLabel(uiState.homeImdbRatingsVisibility),
+                        onClick = { showHomeImdbRatingsDialog = true },
+                        onFocused = { focusedSection = LayoutSettingsSection.IMDB_RATINGS }
+                    )
+                    SettingsActionRow(
+                        title = stringResource(R.string.layout_imdb_ratings_detail),
+                        subtitle = stringResource(R.string.layout_imdb_ratings_detail_sub),
+                        value = detailImdbRatingsVisibilityLabel(uiState.detailImdbRatingsVisibility),
+                        onClick = { showDetailImdbRatingsDialog = true },
+                        onFocused = { focusedSection = LayoutSettingsSection.IMDB_RATINGS }
+                    )
+                }
+            }
+
             item(key = "streams_section") {
                 CollapsibleSectionCard(
                     title = stringResource(R.string.layout_section_streams),
@@ -834,6 +872,28 @@ fun LayoutSettingsContent(
             )
         }
 
+        if (showHomeImdbRatingsDialog) {
+            HomeImdbRatingsDialog(
+                currentVisibility = uiState.homeImdbRatingsVisibility,
+                onVisibilitySelected = { visibility ->
+                    viewModel.onEvent(LayoutSettingsEvent.SetHomeImdbRatingsVisibility(visibility))
+                    showHomeImdbRatingsDialog = false
+                },
+                onDismiss = { showHomeImdbRatingsDialog = false }
+            )
+        }
+
+        if (showDetailImdbRatingsDialog) {
+            DetailImdbRatingsDialog(
+                currentVisibility = uiState.detailImdbRatingsVisibility,
+                onVisibilitySelected = { visibility ->
+                    viewModel.onEvent(LayoutSettingsEvent.SetDetailImdbRatingsVisibility(visibility))
+                    showDetailImdbRatingsDialog = false
+                },
+                onDismiss = { showDetailImdbRatingsDialog = false }
+            )
+        }
+
         if (streamBadgeUiState.isQrModeActive) {
             QrCodeOverlay(
                 qrBitmap = streamBadgeUiState.qrCodeBitmap,
@@ -845,6 +905,22 @@ fun LayoutSettingsContent(
         }
     }
 }
+
+@Composable
+private fun homeImdbRatingsVisibilityLabel(visibility: HomeImdbRatingsVisibility): String =
+    when (visibility) {
+        HomeImdbRatingsVisibility.SHOW_ALL -> stringResource(R.string.layout_imdb_ratings_show_all)
+        HomeImdbRatingsVisibility.HIDE_ALL -> stringResource(R.string.layout_imdb_ratings_hide_all)
+    }
+
+@Composable
+private fun detailImdbRatingsVisibilityLabel(visibility: DetailImdbRatingsVisibility): String =
+    when (visibility) {
+        DetailImdbRatingsVisibility.SHOW_ALL -> stringResource(R.string.layout_imdb_ratings_show_all)
+        DetailImdbRatingsVisibility.HIDE_UNWATCHED_EPISODES -> stringResource(R.string.layout_imdb_ratings_hide_unwatched_episodes)
+        DetailImdbRatingsVisibility.HIDE_EPISODES -> stringResource(R.string.layout_imdb_ratings_hide_episodes)
+        DetailImdbRatingsVisibility.HIDE_ALL -> stringResource(R.string.layout_imdb_ratings_hide_all)
+    }
 
 @Composable
 private fun streamBadgePlacementLabel(placement: StreamBadgePlacement): String =
@@ -894,6 +970,70 @@ private fun StreamBadgePositionDialog(
         onDismiss = onDismiss,
         width = 420.dp,
         maxHeight = 260.dp
+    )
+}
+
+@Composable
+private fun HomeImdbRatingsDialog(
+    currentVisibility: HomeImdbRatingsVisibility,
+    onVisibilitySelected: (HomeImdbRatingsVisibility) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val options = listOf(
+        SettingsPickerOption(
+            HomeImdbRatingsVisibility.SHOW_ALL,
+            stringResource(R.string.layout_imdb_ratings_show_all)
+        ),
+        SettingsPickerOption(
+            HomeImdbRatingsVisibility.HIDE_ALL,
+            stringResource(R.string.layout_imdb_ratings_hide_all)
+        )
+    )
+
+    SettingsSingleChoiceDialog(
+        title = stringResource(R.string.layout_imdb_ratings_home),
+        options = options,
+        selectedValue = currentVisibility,
+        onOptionSelected = onVisibilitySelected,
+        onDismiss = onDismiss,
+        width = 420.dp,
+        maxHeight = 260.dp
+    )
+}
+
+@Composable
+private fun DetailImdbRatingsDialog(
+    currentVisibility: DetailImdbRatingsVisibility,
+    onVisibilitySelected: (DetailImdbRatingsVisibility) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val options = listOf(
+        SettingsPickerOption(
+            DetailImdbRatingsVisibility.SHOW_ALL,
+            stringResource(R.string.layout_imdb_ratings_show_all)
+        ),
+        SettingsPickerOption(
+            DetailImdbRatingsVisibility.HIDE_UNWATCHED_EPISODES,
+            stringResource(R.string.layout_imdb_ratings_hide_unwatched_episodes)
+        ),
+        SettingsPickerOption(
+            DetailImdbRatingsVisibility.HIDE_EPISODES,
+            stringResource(R.string.layout_imdb_ratings_hide_episodes)
+        ),
+        SettingsPickerOption(
+            DetailImdbRatingsVisibility.HIDE_ALL,
+            stringResource(R.string.layout_imdb_ratings_hide_all)
+        )
+    )
+
+    SettingsSingleChoiceDialog(
+        title = stringResource(R.string.layout_imdb_ratings_detail),
+        options = options,
+        selectedValue = currentVisibility,
+        onOptionSelected = onVisibilitySelected,
+        onDismiss = onDismiss,
+        width = 420.dp,
+        maxHeight = 340.dp
     )
 }
 

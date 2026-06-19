@@ -831,6 +831,16 @@
     <string name="layout_hide_unreleased_sub">Hide movies and shows that haven\'t been released yet.</string>
     <string name="layout_section_detail">Detail Page</string>
     <string name="layout_section_detail_desc">Settings for the detail and episode screens.</string>
+    <string name="layout_section_imdb_ratings">IMDb ratings</string>
+    <string name="layout_section_imdb_ratings_desc">Control IMDb ratings on home and detail pages.</string>
+    <string name="layout_imdb_ratings_home">Home</string>
+    <string name="layout_imdb_ratings_home_sub">Choose whether IMDb ratings appear on the home page.</string>
+    <string name="layout_imdb_ratings_detail">Detail page</string>
+    <string name="layout_imdb_ratings_detail_sub">Choose which IMDb ratings appear on detail pages.</string>
+    <string name="layout_imdb_ratings_show_all">Show all</string>
+    <string name="layout_imdb_ratings_hide_unwatched_episodes">Hide Unwatched Episodes ratings</string>
+    <string name="layout_imdb_ratings_hide_episodes">Hide Episodes ratings</string>
+    <string name="layout_imdb_ratings_hide_all">Hide all</string>
     <string name="layout_section_streams">Streams</string>
     <string name="layout_section_streams_desc">Display settings for stream results and player source panels.</string>
     <string name="layout_section_continue_watching">Continue Watching</string>
