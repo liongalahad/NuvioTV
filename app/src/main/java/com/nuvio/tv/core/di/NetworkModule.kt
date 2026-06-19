@@ -83,6 +83,9 @@ private fun buildAcceptLanguageHeader(): String {
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+    private const val DEFAULT_SERIES_GRAPH_API_BASE_URL = "https://seriesgraph.com/"
+    private const val DEFAULT_IMDB_TAPFRAME_API_BASE_URL = "https://imdb.tapframe.space/"
+
     @Provides
     @Singleton
     fun provideMoshi(): Moshi = Moshi.Builder()
@@ -492,7 +495,7 @@ object NetworkModule {
         val normalizedBaseUrl = if (rawBaseUrl.isNotBlank()) {
             if (rawBaseUrl.endsWith('/')) rawBaseUrl else "$rawBaseUrl/"
         } else {
-            "http://localhost/"
+            DEFAULT_SERIES_GRAPH_API_BASE_URL
         }
         return Retrofit.Builder()
             .baseUrl(normalizedBaseUrl)
@@ -514,7 +517,7 @@ object NetworkModule {
         val normalizedBaseUrl = if (rawBaseUrl.isNotBlank()) {
             if (rawBaseUrl.endsWith('/')) rawBaseUrl else "$rawBaseUrl/"
         } else {
-            "http://localhost/"
+            DEFAULT_IMDB_TAPFRAME_API_BASE_URL
         }
         return Retrofit.Builder()
             .baseUrl(normalizedBaseUrl)
