@@ -286,6 +286,7 @@ internal fun HeroTitleBlock(
     previewProvider: () -> HeroPreview?,
     enrichmentActive: () -> Boolean = { false },
     portraitMode: Boolean,
+    showImdbRatings: Boolean,
     trailerPlaying: () -> Boolean = { false },
     modifier: Modifier = Modifier
 ) {
@@ -314,6 +315,7 @@ internal fun HeroTitleBlock(
         HeroTitleContent(
             previewProvider = { displayPreview },
             portraitMode = portraitMode,
+            showImdbRatings = showImdbRatings,
             trailerPlaying = trailerPlaying
         )
     }
@@ -323,6 +325,7 @@ internal fun HeroTitleBlock(
 private fun HeroTitleContent(
     previewProvider: () -> HeroPreview?,
     portraitMode: Boolean,
+    showImdbRatings: Boolean,
     trailerPlaying: () -> Boolean = { false }
 ) {
     val preview = previewProvider() ?: return
@@ -439,9 +442,10 @@ private fun HeroTitleContent(
         val statusBadge = secondaryMeta.status
         val secondaryDetails = secondaryMeta.details
         val hasSecondaryBadge = ageRatingBadge != null || statusBadge != null
-        val showImdbInPrimary = !preview.isSeries && !hasSecondaryBadge && !preview.imdbText.isNullOrBlank()
+        val imdbTextOrNull = preview.imdbText.takeIf { showImdbRatings }?.takeIf { !it.isNullOrBlank() }
+        val showImdbInPrimary = !preview.isSeries && !hasSecondaryBadge && imdbTextOrNull != null
         val showImdbInPrimaryWithHighlight = showImdbInPrimary && secondaryHighlightText == null
-        val showImdbInSecondary = !preview.imdbText.isNullOrBlank() &&
+        val showImdbInSecondary = imdbTextOrNull != null &&
             (preview.isSeries || hasSecondaryBadge || secondaryHighlightText != null)
 
         Row(
@@ -461,7 +465,7 @@ private fun HeroTitleContent(
 
             val runtimeText = preview.runtimeText
             val yearText = preview.yearText
-            val imdbText = preview.imdbText
+            val imdbText = imdbTextOrNull
             val hasTrailingMeta = !runtimeText.isNullOrBlank() ||
                 !yearText.isNullOrBlank() ||
                 showImdbInPrimaryWithHighlight
@@ -568,7 +572,7 @@ private fun HeroTitleContent(
                 }
                 if (showImdbInSecondary) {
                     HeroImdbMeta(
-                        imdbText = preview.imdbText.orEmpty(),
+                        imdbText = imdbTextOrNull.orEmpty(),
                         textStyle = labelMedium,
                         textColor = NuvioTheme.colors.TextSecondary,
                         logoSize = 30.dp * metaScale,

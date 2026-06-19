@@ -158,6 +158,7 @@ fun ModernHomeContent(
             Box(modifier = Modifier.fillMaxSize()) {
                 com.nuvio.tv.ui.components.HeroCarousel(
                     items = uiState.heroItems.asStable(),
+                    showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings,
                     onItemClick = { item ->
                         onNavigateToDetail(item.id, item.apiType, "")
                     },
@@ -578,8 +579,9 @@ fun ModernHomeContent(
                 }
             }
 
-            val resolvedHeroState = remember(activeCarouselItemState, enrichedPreviews, enrichingItemId, heroItem, uiState.heroEnrichmentEnabled, failedEnrichmentIds) {
+            val resolvedHeroState = remember(activeCarouselItemState, enrichedPreviews, enrichingItemId, heroItem, uiState.heroEnrichmentEnabled, uiState.homeImdbRatingsVisibility, failedEnrichmentIds) {
                 derivedStateOf {
+                    val showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings
                     val activeCarouselItem = activeCarouselItemState.value
                     val activeItemId = activeCarouselItem?.metaPreview?.id
                     val enrichmentActive = enrichingItemId != null && enrichingItemId == activeItemId
@@ -596,7 +598,9 @@ fun ModernHomeContent(
                                 ?: activeCarouselItem?.heroPreview?.yearText,
                             runtimeText = formatHeroRuntime(enrichedItem.runtime)
                                 ?: activeCarouselItem?.heroPreview?.runtimeText,
-                            imdbText = enrichedItem.imdbRating?.let { String.format(java.util.Locale.US, "%.1f", it) },
+                            imdbText = enrichedItem.imdbRating
+                                ?.takeIf { showImdbRatings }
+                                ?.let { String.format(java.util.Locale.US, "%.1f", it) },
                             ageRatingText = enrichedItem.ageRating,
                             statusText = enrichedItem.status,
                             countryText = enrichedItem.country,
@@ -616,6 +620,9 @@ fun ModernHomeContent(
                         enrichedHero != null -> enrichedHero
                         else -> activeCarouselItem.heroPreview
                     }
+                        ?.let { hero ->
+                            if (showImdbRatings || hero.imdbText == null) hero else hero.copy(imdbText = null)
+                        }
                     
                     // Only use the real enrichmentActive flag from the ViewModel.
                     // Additionally, if enrichment is enabled but no enriched data exists yet
@@ -958,6 +965,7 @@ fun ModernHomeContent(
                     else heroSceneStateLambda().enrichmentActive
                 },
                 portraitMode = !useLandscapePosters,
+                showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings,
                 trailerPlaying = {
                     if (isRapidHorizontalNav.value) false
                     else {

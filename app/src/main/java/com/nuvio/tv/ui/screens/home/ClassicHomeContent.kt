@@ -412,6 +412,7 @@ fun ClassicHomeContent(
                 HeroCarousel(
                     items = uiState.heroItems.asStable(),
                     focusRequester = if (shouldRequestInitialFocus) heroFocusRequester else null,
+                    showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings,
                     modifier = Modifier.onFocusChanged {
                         if (it.hasFocus && uiState.classicFocusGradientEnabled) {
                             focusedArtwork = null
@@ -547,6 +548,7 @@ fun ClassicHomeContent(
                         catalogRow = catalogRow,
                         posterCardStyle = classicCatalogPosterCardStyle,
                         showPosterLabels = uiState.posterLabelsEnabled,
+                        showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings,
                         showAddonName = uiState.catalogAddonNameEnabled,
                         showCatalogTypeSuffix = uiState.catalogTypeSuffixEnabled,
                         focusedPosterBackdropExpandEnabled = uiState.focusedPosterBackdropExpandEnabled,

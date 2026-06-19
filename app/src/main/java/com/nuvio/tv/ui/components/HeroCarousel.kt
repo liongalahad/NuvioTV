@@ -76,6 +76,7 @@ fun HeroCarousel(
     onItemClick: (MetaPreview) -> Unit,
     onItemFocus: (MetaPreview) -> Unit = {},
     focusRequester: FocusRequester? = null,
+    showImdbRatings: Boolean = true,
     fullWidth: Dp = Dp.Unspecified,
     modifier: Modifier = Modifier
 ) {
@@ -152,7 +153,7 @@ fun HeroCarousel(
             label = "heroSlide"
         ) { index ->
             val item = items.getOrNull(index) ?: return@Crossfade
-            HeroCarouselSlide(item = item)
+            HeroCarouselSlide(item = item, showImdbRatings = showImdbRatings)
         }
 
         // Indicator dots — optimized to minimize recompositions and layout passes
@@ -195,7 +196,8 @@ fun HeroCarousel(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun HeroCarouselSlide(
-    item: MetaPreview
+    item: MetaPreview,
+    showImdbRatings: Boolean
 ) {
     val highlighterEnabled = LocalRecompositionHighlighterEnabled.current
     val context = LocalContext.current
@@ -312,7 +314,7 @@ private fun HeroCarouselSlide(
                 horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.md),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                item.imdbRating?.let { rating ->
+                item.imdbRating?.takeIf { showImdbRatings }?.let { rating ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.xs)
