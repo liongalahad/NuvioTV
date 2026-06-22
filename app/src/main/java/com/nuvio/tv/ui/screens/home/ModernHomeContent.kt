@@ -581,7 +581,6 @@ fun ModernHomeContent(
 
             val resolvedHeroState = remember(activeCarouselItemState, enrichedPreviews, enrichingItemId, heroItem, uiState.heroEnrichmentEnabled, uiState.homeImdbRatingsVisibility, failedEnrichmentIds) {
                 derivedStateOf {
-                    val showImdbRatings = uiState.homeImdbRatingsVisibility.showRatings
                     val activeCarouselItem = activeCarouselItemState.value
                     val activeItemId = activeCarouselItem?.metaPreview?.id
                     val enrichmentActive = enrichingItemId != null && enrichingItemId == activeItemId
@@ -599,7 +598,6 @@ fun ModernHomeContent(
                             runtimeText = formatHeroRuntime(enrichedItem.runtime)
                                 ?: activeCarouselItem?.heroPreview?.runtimeText,
                             imdbText = enrichedItem.imdbRating
-                                ?.takeIf { showImdbRatings }
                                 ?.let { String.format(java.util.Locale.US, "%.1f", it) },
                             ageRatingText = enrichedItem.ageRating,
                             statusText = enrichedItem.status,
@@ -620,9 +618,6 @@ fun ModernHomeContent(
                         enrichedHero != null -> enrichedHero
                         else -> activeCarouselItem.heroPreview
                     }
-                        ?.let { hero ->
-                            if (showImdbRatings || hero.imdbText == null) hero else hero.copy(imdbText = null)
-                        }
                     
                     // Only use the real enrichmentActive flag from the ViewModel.
                     // Additionally, if enrichment is enabled but no enriched data exists yet
