@@ -1,0 +1,9 @@
+{
+  "streams": [
+    {
+      "name": "PR visual test",
+      "title": "Shaka Player public demo asset",
+      "url": "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8"
+    }
+  ]
+}

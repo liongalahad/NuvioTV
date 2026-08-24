@@ -1,0 +1,13 @@
+{
+  "id": "com.liongalahad.pr2384.visual-test",
+  "version": "1.0.0",
+  "name": "PR 2384 Visual Test",
+  "description": "Temporary legal sample stream for Continue Watching visual verification.",
+  "resources": ["stream"],
+  "types": ["movie"],
+  "catalogs": [],
+  "behaviorHints": {
+    "configurable": false,
+    "configurationRequired": false
+  }
+}
