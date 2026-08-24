@@ -2,8 +2,8 @@
   "streams": [
     {
       "name": "PR visual test",
-      "title": "Shaka Player public demo asset",
-      "url": "https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8"
+      "title": "Shaka Player public Sintel demo asset",
+      "url": "https://storage.googleapis.com/shaka-demo-assets/sintel-mp4-only/dash.mpd"
     }
   ]
 }
