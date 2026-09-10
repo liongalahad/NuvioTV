@@ -2831,4 +2831,9 @@
     <string name="stream_test_video_bitrate">平均视频比特率：%1$s</string>
     <string name="stream_test_error_connection">连接失败。上次播放的流链接可能已过期或无法访问。请重新播放视频并重试。</string>
 
+    <string name="random_episode_pool">包含的单集</string>
+    <string name="random_episode_setting">启用每部剧集的随机播放</string>
+    <string name="random_episode_setting_desc">在每部剧集的详情页显示随机播放开关，并保存各自的选择。</string>
+    <string name="random_episode_all">全部</string>
+    <string name="random_episode_unwatched">仅未观看</string>
 </resources>

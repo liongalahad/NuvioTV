@@ -1,5 +1,9 @@
 package com.nuvio.tv.ui.screens.detail
 
+import androidx.compose.material.icons.filled.Shuffle
+import com.nuvio.tv.ui.screens.settings.SettingsPickerOption
+import com.nuvio.tv.ui.screens.settings.SettingsSingleChoiceDialog
+
 import com.nuvio.tv.ui.theme.NuvioMotion
 
 import android.view.KeyEvent as AndroidKeyEvent
@@ -89,6 +93,12 @@ fun HeroContentSection(
     meta: Meta,
     nextEpisode: Video?,
     nextToWatch: NextToWatch?,
+    randomEpisodeAvailable: Boolean = false,
+    randomEpisodeEnabled: Boolean = false,
+    randomEpisodeUnwatchedOnly: Boolean = false,
+    randomEpisodePoolEmpty: Boolean = false,
+    onToggleRandomEpisode: () -> Unit = {},
+    onRandomEpisodePoolSelected: (Boolean) -> Unit = {},
     onPlayClick: () -> Unit,
     onPlayLongPress: (() -> Unit)? = null,
     isInLibrary: Boolean,
@@ -111,6 +121,20 @@ fun HeroContentSection(
     onPlayFocusRestored: () -> Unit = {},
     onShowFullDescription: () -> Unit = {}
 ) {
+    var showRandomPool by remember(meta.id) { mutableStateOf(false) }
+    if (showRandomPool) {
+        SettingsSingleChoiceDialog(
+            title = stringResource(R.string.random_episode_pool),
+            subtitle = meta.name,
+            options = listOf(
+                SettingsPickerOption(false, stringResource(R.string.random_episode_all)),
+                SettingsPickerOption(true, stringResource(R.string.random_episode_unwatched))
+            ),
+            selectedValue = randomEpisodeUnwatchedOnly,
+            onOptionSelected = { onRandomEpisodePoolSelected(it); showRandomPool = false },
+            onDismiss = { showRandomPool = false }
+        )
+    }
     val context = LocalContext.current
     val isSeriesApi = remember(meta.apiType) {
         meta.apiType.equals("series", ignoreCase = true) || meta.apiType.equals("tv", ignoreCase = true)
@@ -239,8 +263,8 @@ fun HeroContentSection(
                     ) {
                         PlayButton(
                             text = nextToWatch?.displayText,
-                            onClick = onPlayClick,
-                            onLongPress = onPlayLongPress,
+                            onClick = { if (!randomEpisodePoolEmpty) onPlayClick() },
+                            onLongPress = if (randomEpisodePoolEmpty) null else onPlayLongPress,
                             focusRequester = playButtonFocusRequester,
                             restoreFocusToken = restorePlayFocusToken,
                             onFocusRestored = {
@@ -261,6 +285,20 @@ fun HeroContentSection(
                             onLongPress = onLibraryLongPress,
                             onFocused = onHeroActionFocused
                         )
+
+                        if (randomEpisodeAvailable) {
+                            ActionIconButton(
+                                icon = Icons.Default.Shuffle,
+                                contentDescription = stringResource(if (randomEpisodeEnabled)
+                                    R.string.random_episode_disable else R.string.random_episode_enable),
+                                selected = randomEpisodeEnabled,
+                                selectedContainerColor = Color.White,
+                                selectedContentColor = Color.Black,
+                                onClick = onToggleRandomEpisode,
+                                onLongPress = { showRandomPool = true },
+                                onFocused = onHeroActionFocused
+                            )
+                        }
 
                         if (meta.apiType == "movie") {
                             ActionIconButton(

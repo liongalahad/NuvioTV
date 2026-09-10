@@ -2928,4 +2928,9 @@
     <string name="stream_test_error_prefix">Erreur : %1$s</string>
     <string name="stream_test_video_bitrate">Débit vidéo moyen : %1$s</string>
     <string name="stream_test_error_connection">Échec de la connexion. Le lien du dernier flux lu a peut-être expiré ou est injoignable. Veuillez relire la vidéo et réessayer.</string>
+    <string name="random_episode_pool">Épisodes inclus</string>
+    <string name="random_episode_setting">Activer la lecture aléatoire par série</string>
+    <string name="random_episode_setting_desc">Affiche un interrupteur de lecture aléatoire dont le choix est conservé pour chaque série.</string>
+    <string name="random_episode_all">Tous</string>
+    <string name="random_episode_unwatched">Non vus uniquement</string>
 </resources>

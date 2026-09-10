@@ -3196,4 +3196,13 @@
     <string name="stream_test_video_bitrate">Average Video Bitrate: %1$s</string>
     <string name="stream_test_error_connection">Connection failed. The last played stream link may have expired or is unreachable. Please play the video again and retry.</string>
 
+    <string name="random_episode_setting">Enable Per-Show Random Playback</string>
+    <string name="random_episode_setting_desc">Show a persistent random playback toggle on each series detail page.</string>
+    <string name="random_episode_enable">Enable random playback</string>
+    <string name="random_episode_disable">Disable random playback</string>
+    <string name="random_episode_badge">Random playback</string>
+    <string name="random_episode_pool">Episodes included</string>
+    <string name="random_episode_all">All</string>
+    <string name="random_episode_unwatched">Unwatched only</string>
+    <string name="random_episode_empty">No eligible episodes</string>
 </resources>

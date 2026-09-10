@@ -1066,4 +1066,9 @@
     <string name="watchlist_removed">Eliminado de lista de deseos</string>
     <string name="playback_player_auto">Automático (Mejor para el contenido)</string>
     <string name="playback_player_auto_desc">ExoPlayer para Películas y Series · MPV para Anime</string>
+    <string name="random_episode_pool">Episodios incluidos</string>
+    <string name="random_episode_setting">Activar reproducción aleatoria por serie</string>
+    <string name="random_episode_setting_desc">Muestra un interruptor de reproducción aleatoria que conserva su estado para cada serie.</string>
+    <string name="random_episode_all">Todos</string>
+    <string name="random_episode_unwatched">Solo no vistos</string>
 </resources>

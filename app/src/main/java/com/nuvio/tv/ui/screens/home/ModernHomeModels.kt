@@ -580,7 +580,8 @@ internal fun continueWatchingItemKey(item: ContinueWatchingItem): String {
         is ContinueWatchingItem.InProgress ->
             "cw_inprogress_${item.progress.contentId}_${item.progress.season ?: -1}_${item.progress.episode ?: -1}"
         is ContinueWatchingItem.NextUp ->
-            "cw_nextup_${item.info.contentId}_${item.info.season}_${item.info.episode}"
+            if (item.randomPlayback) "cw_random_${item.info.contentId}"
+            else "cw_nextup_${item.info.contentId}_${item.info.season}_${item.info.episode}"
     }
 }
 

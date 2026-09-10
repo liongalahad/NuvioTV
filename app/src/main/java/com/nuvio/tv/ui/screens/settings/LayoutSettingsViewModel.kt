@@ -1,5 +1,7 @@
 package com.nuvio.tv.ui.screens.settings
 
+import com.nuvio.tv.data.local.RandomEpisodeDataStore
+
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
@@ -72,6 +74,7 @@ data class LayoutSettingsUiState(
     val blurContinueWatchingNextUp: Boolean = false,
     val useEpisodeThumbnailsInCw: Boolean = true,
     val detailPageTrailerButtonEnabled: Boolean = true,
+    val randomEpisodeEnabled: Boolean = true,
     val detailPageTrailerAutoplayEnabled: Boolean = true,
     val detailPageTrailerAutoplayDelaySeconds: Int = 7,
     val preferExternalMetaAddonDetail: Boolean = false,
@@ -127,6 +130,7 @@ sealed class LayoutSettingsEvent {
     data class SetDetailImdbRatingsVisibility(val visibility: DetailImdbRatingsVisibility) : LayoutSettingsEvent()
     data class SetBlurContinueWatchingNextUp(val enabled: Boolean) : LayoutSettingsEvent()
     data class SetUseEpisodeThumbnailsInCw(val enabled: Boolean) : LayoutSettingsEvent()
+    data class SetRandomEpisodeEnabled(val enabled: Boolean) : LayoutSettingsEvent()
     data class SetDetailPageTrailerButtonEnabled(val enabled: Boolean) : LayoutSettingsEvent()
     data class SetDetailPageTrailerAutoplayEnabled(val enabled: Boolean) : LayoutSettingsEvent()
     data class SetDetailPageTrailerAutoplayDelaySeconds(val seconds: Int) : LayoutSettingsEvent()
@@ -146,6 +150,7 @@ sealed class LayoutSettingsEvent {
 class LayoutSettingsViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val layoutPreferenceDataStore: LayoutPreferenceDataStore,
+    private val randomEpisodeDataStore: RandomEpisodeDataStore,
     private val streamBadgeSettingsDataStore: StreamBadgeSettingsDataStore,
     private val traktSettingsDataStore: TraktSettingsDataStore,
     private val trailerSettingsDataStore: TrailerSettingsDataStore,
@@ -171,6 +176,11 @@ class LayoutSettingsViewModel @Inject constructor(
     }
 
     init {
+        viewModelScope.launch {
+            randomEpisodeDataStore.settings.collectLatest { settings ->
+                updateUiStateIfChanged { it.copy(randomEpisodeEnabled = settings.enabled) }
+            }
+        }
         loadLogoBytes()
         viewModelScope.launch {
             streamBadgeSettingsDataStore.settings.collectLatest { settings ->
@@ -426,6 +436,9 @@ class LayoutSettingsViewModel @Inject constructor(
             is LayoutSettingsEvent.SetDetailImdbRatingsVisibility -> setDetailImdbRatingsVisibility(event.visibility)
             is LayoutSettingsEvent.SetBlurContinueWatchingNextUp -> setBlurContinueWatchingNextUp(event.enabled)
             is LayoutSettingsEvent.SetUseEpisodeThumbnailsInCw -> setUseEpisodeThumbnailsInCw(event.enabled)
+            is LayoutSettingsEvent.SetRandomEpisodeEnabled -> viewModelScope.launch {
+                randomEpisodeDataStore.setEnabled(event.enabled)
+            }
             is LayoutSettingsEvent.SetDetailPageTrailerButtonEnabled -> setDetailPageTrailerButtonEnabled(event.enabled)
             is LayoutSettingsEvent.SetDetailPageTrailerAutoplayEnabled -> setDetailPageTrailerAutoplayEnabled(event.enabled)
             is LayoutSettingsEvent.SetDetailPageTrailerAutoplayDelaySeconds -> setDetailPageTrailerAutoplayDelaySeconds(event.seconds)
