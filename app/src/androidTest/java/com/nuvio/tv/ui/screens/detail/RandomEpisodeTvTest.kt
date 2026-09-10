@@ -2,7 +2,9 @@ package com.nuvio.tv.ui.screens.detail
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.SystemClock
 import android.view.KeyEvent
+import android.view.ViewConfiguration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -11,6 +13,8 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.nuvio.tv.core.profile.ProfileManager
 import com.nuvio.tv.data.local.ProfileDataStore
 import com.nuvio.tv.data.local.ProfileDataStoreFactory
@@ -52,18 +56,41 @@ class RandomEpisodeTvTest {
             }
         }
         val toggle = compose.onNodeWithContentDescription("Enable random playback")
+        val activity = compose.runOnIdle {
+            ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).single()
+        }
         toggle.performSemanticsAction(SemanticsActions.RequestFocus) { it() }
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER)
         compose.waitUntil { enabled }
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER)
         compose.waitUntil { !enabled }
+        for (key in listOf(KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER)) {
+            // Navigate while the opening key is still held; releasing it must not select anything.
+            val downTime = SystemClock.uptimeMillis()
+            fun sendHeldKey(action: Int, repeat: Int = 0) = instrumentation.sendKeySync(
+                KeyEvent(downTime, SystemClock.uptimeMillis(), action, key, repeat, 0))
+            sendHeldKey(KeyEvent.ACTION_DOWN)
+            SystemClock.sleep(ViewConfiguration.getLongPressTimeout().toLong() + 50)
+            sendHeldKey(KeyEvent.ACTION_DOWN, 1)
+            compose.onNodeWithText("Choose episodes for shuffle playback.").assertIsDisplayed()
+            sendHeldKey(KeyEvent.ACTION_DOWN, 2)
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN)
+            compose.onNodeWithText("Unwatched only").assertIsFocused()
+            sendHeldKey(KeyEvent.ACTION_UP)
+            compose.onNodeWithText("Choose episodes for shuffle playback.").assertIsDisplayed()
+            compose.onNodeWithText("Unwatched only").assertIsFocused()
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+            compose.waitForIdle()
+            assertFalse(enabled)
+            assertFalse(unwatched)
+            toggle.assertIsFocused()
+            compose.waitUntil { compose.runOnIdle { activity.hasWindowFocus() } }
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER)
+            compose.waitUntil { enabled }
+            instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER)
+            compose.waitUntil { !enabled }
+        }
         // Menu is the native remote alternative to holding OK.
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_MENU)
-        compose.onNodeWithText("Episodes included").assertIsDisplayed()
-        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
-        compose.waitForIdle()
-        assertFalse(enabled)
-        assertFalse(unwatched)
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_MENU)
         compose.onNodeWithText("Unwatched only").assertIsDisplayed()
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN)
@@ -71,7 +98,10 @@ class RandomEpisodeTvTest {
         instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER)
         compose.waitUntil { enabled && unwatched }
         assertEquals(0, plays)
-        compose.onNodeWithContentDescription("Disable random playback", useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("Disable random playback").assertIsFocused()
+        compose.waitUntil { compose.runOnIdle { activity.hasWindowFocus() } }
+        instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_MENU)
+        compose.onNodeWithText("Unwatched only").assertIsFocused()
     }
 
     @Test fun emptyPoolCannotPlayAndMovieHasNoShuffleControl() {

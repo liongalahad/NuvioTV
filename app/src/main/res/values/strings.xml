@@ -3200,10 +3200,11 @@
     <string name="random_episode_setting_desc">Plays episodes randomly within a series. Long-press for options.</string>
     <string name="random_episode_enable">Enable random playback</string>
     <string name="random_episode_disable">Disable random playback</string>
-    <string name="random_episode_enabled_message">Episodes shuffle play enabled</string>
-    <string name="random_episode_disabled_message">Episodes shuffle play disabled</string>
+    <string name="random_episode_enabled_message">Episode shuffle play enabled (All)</string>
+    <string name="random_episode_enabled_unwatched_message">Episode shuffle play enabled (Unwatched)</string>
+    <string name="random_episode_disabled_message">Episode shuffle play disabled</string>
     <string name="random_episode_badge">Random playback</string>
-    <string name="random_episode_pool">Episodes included</string>
+    <string name="random_episode_pool">Choose episodes for shuffle playback.</string>
     <string name="random_episode_all">All</string>
     <string name="random_episode_unwatched">Unwatched only</string>
     <string name="random_episode_empty">No eligible episodes</string>

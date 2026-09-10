@@ -125,8 +125,11 @@ class MetaDetailsViewModel @Inject constructor(
         val id = _uiState.value.meta?.id?.takeIf { it.isNotBlank() } ?: return
         viewModelScope.launch {
             val enabled = randomEpisodeDataStore.toggleShow(id)
-            showMessage(localizedContext.getString(if (enabled)
-                R.string.random_episode_enabled_message else R.string.random_episode_disabled_message))
+            showMessage(localizedContext.getString(when {
+                !enabled -> R.string.random_episode_disabled_message
+                id in randomEpisodeDataStore.settings.first().unwatchedShows -> R.string.random_episode_enabled_unwatched_message
+                else -> R.string.random_episode_enabled_message
+            }))
         }
     }
 
@@ -134,7 +137,8 @@ class MetaDetailsViewModel @Inject constructor(
         val id = _uiState.value.meta?.id?.takeIf { it.isNotBlank() } ?: return
         viewModelScope.launch {
             randomEpisodeDataStore.selectPool(id, unwatchedOnly)
-            showMessage(localizedContext.getString(R.string.random_episode_enabled_message))
+            showMessage(localizedContext.getString(if (unwatchedOnly)
+                R.string.random_episode_enabled_unwatched_message else R.string.random_episode_enabled_message))
         }
     }
 
