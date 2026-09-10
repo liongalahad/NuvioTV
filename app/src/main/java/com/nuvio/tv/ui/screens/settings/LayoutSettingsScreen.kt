@@ -516,13 +516,6 @@ fun LayoutSettingsContent(
                     focusRequester = detailPageHeaderFocus,
                     onFocused = { focusedSection = LayoutSettingsSection.DETAIL_PAGE }
                 ) {
-                    CompactToggleRow(
-                        title = stringResource(R.string.random_episode_setting),
-                        subtitle = stringResource(R.string.random_episode_setting_desc),
-                        checked = uiState.randomEpisodeEnabled,
-                        onToggle = { viewModel.onEvent(LayoutSettingsEvent.SetRandomEpisodeEnabled(!uiState.randomEpisodeEnabled)) },
-                        onFocused = { focusedSection = LayoutSettingsSection.DETAIL_PAGE }
-                    )
                     SettingsActionRow(
                         title = stringResource(R.string.layout_episode_options_overlay),
                         subtitle = stringResource(R.string.layout_episode_options_overlay_sub),
@@ -596,6 +589,14 @@ fun LayoutSettingsContent(
                                 )
                             )
                         },
+                        onFocused = { focusedSection = LayoutSettingsSection.DETAIL_PAGE }
+                    )
+
+                    CompactToggleRow(
+                        title = stringResource(R.string.random_episode_setting),
+                        subtitle = stringResource(R.string.random_episode_setting_desc),
+                        checked = uiState.randomEpisodeEnabled,
+                        onToggle = { viewModel.onEvent(LayoutSettingsEvent.SetRandomEpisodeEnabled(!uiState.randomEpisodeEnabled)) },
                         onFocused = { focusedSection = LayoutSettingsSection.DETAIL_PAGE }
                     )
 
