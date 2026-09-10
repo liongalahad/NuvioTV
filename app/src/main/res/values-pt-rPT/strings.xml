@@ -2593,4 +2593,9 @@
     <string name="profile_default_name">Perfil %1$d</string>
     <string name="detail_tmdb_fallback_title">TMDB %1$d</string>
     <string name="collections_editor_tmdb_collection_fallback">Coleção TMDB %1$d</string>
+    <string name="random_episode_pool">Episódios incluídos</string>
+    <string name="random_episode_setting">Ativar reprodução aleatória por série</string>
+    <string name="random_episode_setting_desc">Mostrar em cada série um botão de reprodução aleatória que mantém a escolha.</string>
+    <string name="random_episode_all">Todos</string>
+    <string name="random_episode_unwatched">Apenas não vistos</string>
 </resources>

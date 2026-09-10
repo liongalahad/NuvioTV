@@ -201,7 +201,11 @@ private fun resolveHeroPlaybackVideo(
         it.id == defaultVideoId && it.available != false
     }
 
-    return byId ?: bySeasonEpisode ?: defaultVideo ?: episodesForSeason.firstOrNull()
+    val resumeVideo = nextToWatch?.takeIf { it.isResume }?.watchProgress?.let { progress ->
+        Video(progress.videoId, progress.episodeTitle.orEmpty(), null, progress.poster,
+            season = progress.season, episode = progress.episode, overview = null)
+    }
+    return byId ?: resumeVideo ?: bySeasonEpisode ?: defaultVideo ?: episodesForSeason.firstOrNull()
 }
 
 private const val USER_INTERACTION_DISPATCH_DEBOUNCE_MS = 120L
@@ -613,7 +617,7 @@ fun MetaDetailsScreen(
                     uiState.nextToWatch,
                     playOnLoadVideo?.id
                 ) {
-                    if (!playOnLoad || playOnLoadConsumed.value || (isSeries && uiState.nextToWatch == null)) {
+                    if (!playOnLoad || playOnLoadConsumed.value || uiState.randomEpisodePoolEmpty || (isSeries && uiState.nextToWatch == null)) {
                         return@LaunchedEffect
                     }
                     playOnLoadConsumed.value = true
@@ -657,6 +661,12 @@ fun MetaDetailsScreen(
                     isInLibrary = uiState.isInLibrary,
                     librarySourceMode = uiState.librarySourceMode,
                     nextToWatch = uiState.nextToWatch,
+                    randomEpisodeAvailable = uiState.randomEpisodeAvailable,
+                    randomEpisodeEnabled = uiState.randomEpisodeEnabled,
+                    randomEpisodeUnwatchedOnly = uiState.randomEpisodeUnwatchedOnly,
+                    randomEpisodePoolEmpty = uiState.randomEpisodePoolEmpty,
+                    onToggleRandomEpisode = viewModel::toggleRandomEpisode,
+                    onRandomEpisodePoolSelected = viewModel::selectRandomEpisodePool,
                     episodeProgressMap = uiState.episodeProgressMap,
                     watchedEpisodes = uiState.watchedEpisodes,
                     episodeWatchedPendingKeys = uiState.episodeWatchedPendingKeys,
@@ -968,6 +978,12 @@ private fun MetaDetailsContent(
     isInLibrary: Boolean,
     librarySourceMode: LibrarySourceMode,
     nextToWatch: NextToWatch?,
+    randomEpisodeAvailable: Boolean,
+    randomEpisodeEnabled: Boolean,
+    randomEpisodeUnwatchedOnly: Boolean,
+    randomEpisodePoolEmpty: Boolean,
+    onToggleRandomEpisode: () -> Unit,
+    onRandomEpisodePoolSelected: (Boolean) -> Unit,
     episodeProgressMap: Map<Pair<Int, Int>, WatchProgress>,
     watchedEpisodes: Set<Pair<Int, Int>>,
     episodeWatchedPendingKeys: Set<String>,
@@ -1783,6 +1799,12 @@ private fun MetaDetailsContent(
                         meta = meta,
                         nextEpisode = nextEpisode,
                         nextToWatch = nextToWatch,
+                        randomEpisodeAvailable = randomEpisodeAvailable,
+                        randomEpisodeEnabled = randomEpisodeEnabled,
+                        randomEpisodeUnwatchedOnly = randomEpisodeUnwatchedOnly,
+                        randomEpisodePoolEmpty = randomEpisodePoolEmpty,
+                        onToggleRandomEpisode = onToggleRandomEpisode,
+                        onRandomEpisodePoolSelected = onRandomEpisodePoolSelected,
                         onPlayClick = heroPlayClick,
                         onPlayLongPress = if (showManualPlayOption || nextToWatch?.isResume == true) {
                             { showHeroPlayOptionsDialog = true }

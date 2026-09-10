@@ -3108,4 +3108,9 @@
     <string name="stream_test_error_prefix">Erro: %1$s</string>
     <string name="stream_test_video_bitrate">Taxa média de bits do vídeo: %1$s</string>
     <string name="stream_test_error_connection">Falha na conexão. O link do último stream reproduzido pode ter expirado ou estar inacessível. Por favor, reproduza o vídeo novamente e tente de novo.</string>
+    <string name="random_episode_pool">Episódios incluídos</string>
+    <string name="random_episode_setting">Ativar reprodução aleatória por série</string>
+    <string name="random_episode_setting_desc">Mostrar em cada série um botão de reprodução aleatória que mantém a escolha.</string>
+    <string name="random_episode_all">Todos</string>
+    <string name="random_episode_unwatched">Apenas não vistos</string>
 </resources>

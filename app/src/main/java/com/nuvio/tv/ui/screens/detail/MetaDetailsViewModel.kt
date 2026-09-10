@@ -1,5 +1,11 @@
 package com.nuvio.tv.ui.screens.detail
 
+import com.nuvio.tv.data.local.RandomEpisodeSettings
+import com.nuvio.tv.data.local.RandomEpisodeDataStore
+import com.nuvio.tv.domain.model.RandomEpisodeSelector
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -77,6 +83,8 @@ private const val TAG = "MetaDetailsViewModel"
 class MetaDetailsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val metaRepository: MetaRepository,
+    private val randomEpisodeDataStore: RandomEpisodeDataStore,
+    private val randomEpisodeSelector: RandomEpisodeSelector,
     private val tmdbSettingsDataStore: TmdbSettingsDataStore,
     private val tmdbService: TmdbService,
     private val tmdbMetadataService: TmdbMetadataService,
@@ -105,7 +113,34 @@ class MetaDetailsViewModel @Inject constructor(
     private val preferredAddonBaseUrl: String? = savedStateHandle["addonBaseUrl"]
 
     private val _uiState = MutableStateFlow(MetaDetailsUiState())
-    val uiState: StateFlow<MetaDetailsUiState> = _uiState.asStateFlow()
+    private val randomEpisodeSelection = RandomEpisodeSelector.Selection("detail")
+    val uiState: StateFlow<MetaDetailsUiState> = combine(
+        _uiState, randomEpisodeDataStore.settings, watchProgressRepository.continueWatching
+    ) { state, settings, progress ->
+        randomEpisodeDetailState(state, settings, progress, randomEpisodeSelector,
+            randomEpisodeSelection, localizedContext)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, MetaDetailsUiState())
+
+    fun toggleRandomEpisode() {
+        val id = _uiState.value.meta?.id?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            val enabled = randomEpisodeDataStore.toggleShow(id)
+            showMessage(localizedContext.getString(when {
+                !enabled -> R.string.random_episode_disabled_message
+                id in randomEpisodeDataStore.settings.first().unwatchedShows -> R.string.random_episode_enabled_unwatched_message
+                else -> R.string.random_episode_enabled_message
+            }))
+        }
+    }
+
+    fun selectRandomEpisodePool(unwatchedOnly: Boolean) {
+        val id = _uiState.value.meta?.id?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            randomEpisodeDataStore.selectPool(id, unwatchedOnly)
+            showMessage(localizedContext.getString(if (unwatchedOnly)
+                R.string.random_episode_enabled_unwatched_message else R.string.random_episode_enabled_message))
+        }
+    }
 
     private val _posterCardCornerRadiusDp = MutableStateFlow(12)
     val posterCardCornerRadiusDp: StateFlow<Int> = _posterCardCornerRadiusDp.asStateFlow()
@@ -2999,4 +3034,45 @@ class MetaDetailsViewModel @Inject constructor(
         trailerFetchJob?.cancel()
         nextToWatchJob?.cancel()
     }
+}
+
+internal fun randomEpisodeDetailState(
+    state: MetaDetailsUiState,
+    settings: RandomEpisodeSettings,
+    continueWatching: List<WatchProgress>,
+    selector: RandomEpisodeSelector,
+    selection: RandomEpisodeSelector.Selection,
+    context: Context
+): MetaDetailsUiState {
+    val meta = state.meta ?: return state
+    val available = settings.enabled && meta.apiType.lowercase() in setOf("series", "tv") &&
+        RandomEpisodeSelector.eligible(meta.videos).isNotEmpty()
+    val enabled = settings.isEnabled(meta.id, meta.apiType)
+    val unwatchedOnly = meta.id in settings.unwatchedShows
+    val base = state.copy(randomEpisodeAvailable = available, randomEpisodeEnabled = enabled,
+        randomEpisodeUnwatchedOnly = unwatchedOnly)
+    if (!enabled || !available) {
+        selection.clear()
+        return base
+    }
+    // Read the same live source as Home. No cached Resume can resurrect a removed session.
+    val resume = continueWatching.filter {
+        (it.contentId == meta.id || it.contentId == meta.imdbId) &&
+            it.contentType.lowercase() in setOf("series", "tv") &&
+            it.season != null && it.episode != null && !it.isCompleted() &&
+            (it.position > 0 || it.progressPercentage > 0)
+    }.maxByOrNull { it.lastWatched }
+    if (resume != null) {
+        return base.copy(nextToWatch = NextToWatch(resume, true, resume.videoId,
+            resume.season, resume.episode,
+            context.getString(R.string.detail_btn_resume_episode, resume.season, resume.episode)))
+    }
+    val watched = state.watchedEpisodes + state.episodeProgressMap.filterValues { it.isCompleted() }.keys
+    val video = selector.select(settings.profileId, meta.id, meta.videos, unwatchedOnly, watched, selection)
+    return base.copy(
+        randomEpisodePoolEmpty = video == null,
+        nextToWatch = NextToWatch(null, false, video?.id, video?.season, video?.episode,
+            if (video == null) context.getString(R.string.random_episode_empty)
+            else context.getString(R.string.detail_btn_play_episode, video.season, video.episode))
+    )
 }

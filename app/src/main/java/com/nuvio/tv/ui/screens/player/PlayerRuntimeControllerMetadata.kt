@@ -221,11 +221,21 @@ internal fun PlayerRuntimeController.recomputeNextEpisode(resetVisibility: Boole
         return
     }
 
-    val resolvedNext = PlayerNextEpisodeRules.resolveNextEpisode(
-        videos = metaVideos,
-        currentSeason = season,
-        currentEpisode = episode
-    )
+    val coordinate = season to episode
+    if (randomEpisodeCurrent != coordinate) {
+        randomEpisodeCurrent = coordinate
+        randomEpisodeSelection.clear()
+    }
+    val resolvedNext = if (randomEpisodeSettings.isEnabled(contentId.orEmpty(), normalizedType.orEmpty())) {
+        val state = _uiState.value
+        randomEpisodeSelector.select(profileId, contentId.orEmpty(), metaVideos,
+            contentId in randomEpisodeSettings.unwatchedShows,
+            state.watchedEpisodeKeys + state.episodeWatchProgressMap.filterValues { it.isCompleted() }.keys,
+            randomEpisodeSelection, current = coordinate)
+    } else {
+        randomEpisodeSelection.clear()
+        PlayerNextEpisodeRules.resolveNextEpisode(metaVideos, season, episode)
+    }
 
     nextEpisodeVideo = resolvedNext
     if (resolvedNext == null) {

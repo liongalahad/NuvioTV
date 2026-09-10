@@ -276,18 +276,18 @@ internal fun PlayerRuntimeController.observeBlurUnwatchedEpisodes() {
 
 internal fun PlayerRuntimeController.observeEpisodeWatchProgress() {
     val id = contentId ?: return
-    val type = contentType ?: return
-    if (type.lowercase() != "series") return
-    val baseId = id.split(":").firstOrNull() ?: id
+    if (contentType?.lowercase() !in setOf("series", "tv")) return
     scope.launch {
-        watchProgressRepository.getAllEpisodeProgress(baseId, profileId).collectLatest { progressMap ->
-            _uiState.update { it.copy(episodeWatchProgressMap = progressMap) }
-        }
-    }
-    scope.launch {
-        watchedItemsPreferences.getWatchedEpisodesForContent(baseId, profileId).collectLatest { watchedSet ->
-            _uiState.update { it.copy(watchedEpisodeKeys = watchedSet) }
-        }
+        kotlinx.coroutines.flow.combine(
+            randomEpisodeDataStore.settingsForProfile(profileId),
+            watchProgressRepository.getAllEpisodeProgress(id, profileId),
+            watchedItemsPreferences.getWatchedEpisodesForContent(id, profileId)
+        ) { settings, progress, watched -> Triple(settings, progress, watched) }
+            .collectLatest { (settings, progress, watched) ->
+                randomEpisodeSettings = settings
+                _uiState.update { it.copy(episodeWatchProgressMap = progress, watchedEpisodeKeys = watched) }
+                recomputeNextEpisode(resetVisibility = false)
+            }
     }
 }
 

@@ -2730,4 +2730,9 @@
     <string name="profile_default_name">プロフィール%1$d</string>
     <string name="detail_tmdb_fallback_title">TMDB %1$d</string>
     <string name="collections_editor_tmdb_collection_fallback">TMDBコレクション%1$d</string>
+    <string name="random_episode_pool">対象エピソード</string>
+    <string name="random_episode_setting">シリーズごとのランダム再生を有効にする</string>
+    <string name="random_episode_setting_desc">各シリーズの詳細ページに、選択を保持するランダム再生スイッチを表示します。</string>
+    <string name="random_episode_all">すべて</string>
+    <string name="random_episode_unwatched">未視聴のみ</string>
 </resources>

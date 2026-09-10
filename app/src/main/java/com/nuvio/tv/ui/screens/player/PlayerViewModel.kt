@@ -66,6 +66,8 @@ class PlayerViewModel @Inject constructor(
     private val streamBadgeSettingsDataStore: StreamBadgeSettingsDataStore,
     private val bingeGroupCacheDataStore: com.nuvio.tv.data.local.BingeGroupCacheDataStore,
     private val layoutPreferenceDataStore: com.nuvio.tv.data.local.LayoutPreferenceDataStore,
+    private val randomEpisodeDataStore: com.nuvio.tv.data.local.RandomEpisodeDataStore,
+    private val randomEpisodeSelector: com.nuvio.tv.domain.model.RandomEpisodeSelector,
     private val watchedItemsPreferences: com.nuvio.tv.data.local.WatchedItemsPreferences,
     private val watchedSeriesStateHolder: WatchedSeriesStateHolder,
     private val trackPreferenceDataStore: com.nuvio.tv.data.local.TrackPreferenceDataStore,
@@ -122,6 +124,8 @@ class PlayerViewModel @Inject constructor(
         bingeGroupCacheDataStore = bingeGroupCacheDataStore,
         layoutPreferenceDataStore = layoutPreferenceDataStore,
         watchedItemsPreferences = watchedItemsPreferences,
+        randomEpisodeDataStore = randomEpisodeDataStore,
+        randomEpisodeSelector = randomEpisodeSelector,
         trackPreferenceDataStore = trackPreferenceDataStore,
         audioDelayRouteDataStore = audioDelayRouteDataStore,
         torrentService = torrentService,
@@ -324,11 +328,12 @@ class PlayerViewModel @Inject constructor(
         val nextEpisodeSnapshot = controller.metaVideos
             .takeIf { it.isNotEmpty() }
             ?.let { videos ->
-                com.nuvio.tv.core.player.resolveExternalNextEpisodeSnapshot(
-                    videos = videos,
-                    currentSeason = metadata.season,
-                    currentEpisode = metadata.episode
-                )
+                if (controller.randomEpisodeSettings.isEnabled(metadata.contentId, metadata.contentType)) {
+                    val next = controller.uiState.value.nextEpisode
+                    com.nuvio.tv.core.player.ExternalNextEpisodeSnapshot(true, next?.videoId, next?.season, next?.episode)
+                } else {
+                    com.nuvio.tv.core.player.resolveExternalNextEpisodeSnapshot(videos, metadata.season, metadata.episode)
+                }
             }
 
         // Capture already-loaded addon subtitles before handing off. Preparation stays in the

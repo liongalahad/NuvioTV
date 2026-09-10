@@ -2301,4 +2301,9 @@
     <string name="trakt_comments_error_request_failed">Trakt comments request failed</string>
     <string name="trakt_library_error_fetch_list_items">Failed to fetch list items</string>
 
+    <string name="random_episode_pool">Enthaltene Episoden</string>
+    <string name="random_episode_setting">Zufallswiedergabe pro Serie aktivieren</string>
+    <string name="random_episode_setting_desc">Zeigt auf jeder Seriendetailseite einen Schalter mit gespeicherter Auswahl für die Zufallswiedergabe.</string>
+    <string name="random_episode_all">Alle</string>
+    <string name="random_episode_unwatched">Nur ungesehene</string>
 </resources>

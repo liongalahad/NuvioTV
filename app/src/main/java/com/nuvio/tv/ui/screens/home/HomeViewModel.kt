@@ -1,5 +1,10 @@
 package com.nuvio.tv.ui.screens.home
 
+import com.nuvio.tv.data.local.RandomEpisodeDataStore
+import com.nuvio.tv.domain.model.RandomEpisodeSelector
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+
 import android.content.Context
 import android.os.SystemClock
 import androidx.compose.runtime.mutableStateMapOf
@@ -67,6 +72,8 @@ class HomeViewModel @Inject constructor(
     internal val watchProgressRepository: WatchProgressRepository,
     internal val libraryRepository: LibraryRepository,
     internal val metaRepository: MetaRepository,
+    private val randomEpisodeDataStore: RandomEpisodeDataStore,
+    private val randomEpisodeSelector: RandomEpisodeSelector,
     internal val collectionsDataStore: CollectionsDataStore,
     internal val layoutPreferenceDataStore: LayoutPreferenceDataStore,
     internal val playerSettingsDataStore: PlayerSettingsDataStore,
@@ -111,7 +118,59 @@ class HomeViewModel @Inject constructor(
     }
 
     internal val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    internal val randomHomeVisit = MutableStateFlow(0)
+    private val randomHomeSelections = mutableMapOf<String, RandomEpisodeSelector.Selection>()
+    private val randomWatchedEpisodes = combine(
+        watchProgressRepository.watchedItems, watchProgressRepository.allProgress
+    ) { watched, progress ->
+        (watched.mapNotNull { item -> item.season?.let { s -> item.episode?.let { e -> item.contentId to (s to e) } } } +
+            progress.filter { it.isCompleted() }.mapNotNull { item ->
+                item.season?.let { s -> item.episode?.let { e -> item.contentId to (s to e) } }
+            }).groupBy({ it.first }, { it.second }).mapValues { it.value.toSet() }
+    }.distinctUntilChanged()
+    val uiState: StateFlow<HomeUiState> = combine(
+        _uiState, randomEpisodeDataStore.settings, randomHomeVisit, randomWatchedEpisodes
+    ) { state, settings, _, watched ->
+        if (!settings.enabled || settings.enabledShows.isEmpty()) {
+            randomHomeSelections.clear()
+            state
+        } else {
+            val items = (state.continueWatchingItems + state.upcomingItems).mapNotNull { item ->
+                when (item) {
+                    is ContinueWatchingItem.InProgress -> item.copy(randomPlayback =
+                        settings.isEnabled(item.progress.contentId, item.progress.contentType))
+                    is ContinueWatchingItem.NextUp -> {
+                        val info = item.info
+                        if (!settings.isEnabled(info.contentId, info.contentType)) {
+                            randomHomeSelections.remove(info.contentId)
+                            item
+                        } else {
+                            val meta = cwMetaCache["${info.contentType}:${info.contentId}"]
+                                ?: cwMetaCache["series:${info.contentId}"] ?: cwMetaCache["tv:${info.contentId}"]
+                            // Wait for the existing CW metadata request; never fetch another catalogue.
+                            if (meta == null) null else {
+                                randomEpisodeSelector.select(settings.profileId, info.contentId, meta.randomEpisodeVideos,
+                                    info.contentId in settings.unwatchedShows, watched[info.contentId].orEmpty(),
+                                    randomHomeSelections.getOrPut(info.contentId) { RandomEpisodeSelector.Selection("home") })
+                                    ?.let { v -> item.copy(randomPlayback = true, info = info.copy(
+                                        videoId = v.id, season = v.season!!, episode = v.episode!!,
+                                        episodeTitle = v.title, episodeDescription = v.overview, thumbnail = v.thumbnail,
+                                        released = v.released, hasAired = true, airDateLabel = null,
+                                        isReleaseAlert = false, isNewSeasonRelease = false)) }
+                            }
+                        }
+                    }
+                }
+            }
+            val (main, upcoming) = splitUpcomingItems(items, continueWatchingSortMode)
+            state.copy(continueWatchingItems = main, upcomingItems = upcoming)
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, HomeUiState())
+
+    fun beginRandomHomeVisit() {
+        randomHomeSelections.clear()
+        randomHomeVisit.value++
+    }
 
     internal val _modernHomePresentation = MutableStateFlow(ModernHomePresentationState())
     val modernHomePresentation: StateFlow<ModernHomePresentationState> = _modernHomePresentation.asStateFlow()

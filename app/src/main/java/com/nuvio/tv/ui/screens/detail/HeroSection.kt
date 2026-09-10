@@ -1,5 +1,8 @@
 package com.nuvio.tv.ui.screens.detail
 
+import androidx.compose.material.icons.filled.Shuffle
+import com.nuvio.tv.ui.components.NuvioDialog
+
 import com.nuvio.tv.ui.theme.NuvioMotion
 
 import android.view.KeyEvent as AndroidKeyEvent
@@ -89,6 +92,12 @@ fun HeroContentSection(
     meta: Meta,
     nextEpisode: Video?,
     nextToWatch: NextToWatch?,
+    randomEpisodeAvailable: Boolean = false,
+    randomEpisodeEnabled: Boolean = false,
+    randomEpisodeUnwatchedOnly: Boolean = false,
+    randomEpisodePoolEmpty: Boolean = false,
+    onToggleRandomEpisode: () -> Unit = {},
+    onRandomEpisodePoolSelected: (Boolean) -> Unit = {},
     onPlayClick: () -> Unit,
     onPlayLongPress: (() -> Unit)? = null,
     isInLibrary: Boolean,
@@ -111,6 +120,33 @@ fun HeroContentSection(
     onPlayFocusRestored: () -> Unit = {},
     onShowFullDescription: () -> Unit = {}
 ) {
+    var showRandomPool by remember(meta.id) { mutableStateOf(false) }
+    if (showRandomPool) {
+        val selectedFocus = remember { FocusRequester() }
+        NuvioDialog(
+            title = meta.name,
+            subtitle = stringResource(R.string.random_episode_pool),
+            onDismiss = { showRandomPool = false }
+        ) {
+            LaunchedEffect(Unit) { selectedFocus.requestFocus() }
+            for (unwatchedOnly in listOf(false, true)) {
+                val selected = unwatchedOnly == randomEpisodeUnwatchedOnly
+                Button(
+                    onClick = { onRandomEpisodePoolSelected(unwatchedOnly); showRandomPool = false },
+                    modifier = Modifier.fillMaxWidth()
+                        .then(if (selected) Modifier.focusRequester(selectedFocus) else Modifier),
+                    colors = ButtonDefaults.colors(
+                        containerColor = NuvioTheme.colors.BackgroundCard,
+                        contentColor = NuvioTheme.colors.TextPrimary
+                    )
+                ) {
+                    Text(stringResource(if (unwatchedOnly) R.string.random_episode_unwatched else R.string.random_episode_all),
+                        modifier = Modifier.weight(1f))
+                    if (selected) Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_selected))
+                }
+            }
+        }
+    }
     val context = LocalContext.current
     val isSeriesApi = remember(meta.apiType) {
         meta.apiType.equals("series", ignoreCase = true) || meta.apiType.equals("tv", ignoreCase = true)
@@ -239,8 +275,8 @@ fun HeroContentSection(
                     ) {
                         PlayButton(
                             text = nextToWatch?.displayText,
-                            onClick = onPlayClick,
-                            onLongPress = onPlayLongPress,
+                            onClick = { if (!randomEpisodePoolEmpty) onPlayClick() },
+                            onLongPress = if (randomEpisodePoolEmpty) null else onPlayLongPress,
                             focusRequester = playButtonFocusRequester,
                             restoreFocusToken = restorePlayFocusToken,
                             onFocusRestored = {
@@ -261,6 +297,20 @@ fun HeroContentSection(
                             onLongPress = onLibraryLongPress,
                             onFocused = onHeroActionFocused
                         )
+
+                        if (randomEpisodeAvailable) {
+                            ActionIconButton(
+                                icon = Icons.Default.Shuffle,
+                                contentDescription = stringResource(if (randomEpisodeEnabled)
+                                    R.string.random_episode_disable else R.string.random_episode_enable),
+                                selected = randomEpisodeEnabled,
+                                selectedContainerColor = Color.White,
+                                selectedContentColor = Color.Black,
+                                onClick = onToggleRandomEpisode,
+                                onLongPress = { showRandomPool = true },
+                                onFocused = onHeroActionFocused
+                            )
+                        }
 
                         if (meta.apiType == "movie") {
                             ActionIconButton(
@@ -527,6 +577,9 @@ private fun ActionIconButton(
             }
             .onPreviewKeyEvent { event ->
                 val native = event.nativeKeyEvent
+                if (native.action == AndroidKeyEvent.ACTION_DOWN && native.repeatCount == 0 && isSelectKey(native.keyCode)) {
+                    longPressTriggered = false
+                }
                 if (onLongPress != null && native.action == AndroidKeyEvent.ACTION_DOWN) {
                     if (native.keyCode == AndroidKeyEvent.KEYCODE_MENU) {
                         longPressTriggered = true

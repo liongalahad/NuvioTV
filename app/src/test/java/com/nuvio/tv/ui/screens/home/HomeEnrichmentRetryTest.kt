@@ -440,7 +440,12 @@ class HomeEnrichmentRetryTest {
             mockk<com.nuvio.tv.domain.repository.WatchProgressRepository>(relaxed = true) {
                 every { getAllEpisodeProgress(any()) } returns flowOf(emptyMap())
             }
+        val randomSettings = mockk<com.nuvio.tv.data.local.RandomEpisodeDataStore> {
+            every { settings } returns kotlinx.coroutines.flow.flowOf(com.nuvio.tv.data.local.RandomEpisodeSettings())
+        }
         val viewModel = HomeViewModel(
+            randomEpisodeDataStore = randomSettings,
+            randomEpisodeSelector = com.nuvio.tv.domain.model.RandomEpisodeSelector(),
             appContext = mockk(relaxed = true),
             addonRepository = mockk(relaxed = true),
             startupSyncService = mockk(relaxed = true),

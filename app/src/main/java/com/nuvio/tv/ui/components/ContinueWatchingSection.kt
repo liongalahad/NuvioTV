@@ -1,5 +1,12 @@
 package com.nuvio.tv.ui.components
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.ui.draw.shadow
+import androidx.tv.material3.Icon
+
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -250,7 +257,8 @@ fun ContinueWatchingSection(
                         is ContinueWatchingItem.InProgress ->
                             "cw_${progress.progress.contentId}_${progress.progress.videoId}_${progress.progress.season ?: -1}_${progress.progress.episode ?: -1}"
                         is ContinueWatchingItem.NextUp ->
-                            "nextup_${progress.info.contentId}_${progress.info.videoId}_${progress.info.season}_${progress.info.episode}"
+                            if (progress.randomPlayback) "random_${progress.info.contentId}"
+                            else "nextup_${progress.info.contentId}_${progress.info.videoId}_${progress.info.season}_${progress.info.episode}"
                     }
                 }
             ) { index, progress ->
@@ -679,6 +687,7 @@ fun ContinueWatchingCard(
                 badgeText = badgeText,
                 badgeBackground = badgeBackground,
                 showBadge = progress == null,
+                randomPlayback = item.randomPlayback,
                 progressFraction = progressFraction,
                 hasProgress = progress != null,
                 onImageError = {
@@ -783,6 +792,8 @@ fun ContinueWatchingCard(
                         }
                     )
                 }
+
+                if (item.randomPlayback) RandomEpisodeBadge(Modifier.align(Alignment.TopStart))
 
                 // Content info at bottom
                 if (!textBelowArtwork) {
@@ -922,6 +933,7 @@ private fun WideCardContent(
     badgeText: String,
     badgeBackground: Color,
     showBadge: Boolean,
+    randomPlayback: Boolean,
     progressFraction: Float,
     hasProgress: Boolean,
     onImageError: () -> Unit
@@ -960,6 +972,7 @@ private fun WideCardContent(
                     onError = { onImageError() }
                 )
             }
+            if (randomPlayback) RandomEpisodeBadge(Modifier.align(Alignment.TopStart))
         }
 
         Column(
@@ -1201,4 +1214,11 @@ internal fun formatRemainingTime(
         minutes > 0 -> strMinLeft.format(minutes)
         else -> strAlmostDone
     }
+}
+
+@Composable
+private fun RandomEpisodeBadge(modifier: Modifier = Modifier) {
+    Icon(Icons.Default.Shuffle, stringResource(R.string.random_episode_badge), tint = Color.Black,
+        modifier = modifier.padding(8.dp).size(20.dp).shadow(10.dp, CircleShape)
+            .background(Color.White, CircleShape).padding(2.dp))
 }

@@ -593,6 +593,14 @@ fun LayoutSettingsContent(
                     )
 
                     CompactToggleRow(
+                        title = stringResource(R.string.random_episode_setting),
+                        subtitle = stringResource(R.string.random_episode_setting_desc),
+                        checked = uiState.randomEpisodeEnabled,
+                        onToggle = { viewModel.onEvent(LayoutSettingsEvent.SetRandomEpisodeEnabled(!uiState.randomEpisodeEnabled)) },
+                        onFocused = { focusedSection = LayoutSettingsSection.DETAIL_PAGE }
+                    )
+
+                    CompactToggleRow(
                         title = stringResource(R.string.layout_prefer_external_meta),
                         subtitle = stringResource(R.string.layout_prefer_external_meta_sub),
                         checked = uiState.preferExternalMetaAddonDetail,

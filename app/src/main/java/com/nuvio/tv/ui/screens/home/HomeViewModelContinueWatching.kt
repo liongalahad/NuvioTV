@@ -89,6 +89,11 @@ internal data class CwMetaSummary(
     val country: String?,
     val videos: List<CwVideoSummary>
 ) {
+    val randomEpisodeVideos: List<Video> by lazy {
+        videos.map { Video(it.id, it.title.orEmpty(), it.released, it.thumbnail,
+            season = it.season, episode = it.episode, overview = it.overview, available = it.available) }
+    }
+
     fun watchableEpisodes(): List<CwVideoSummary> {
         val candidates = videos.filter { it.season != null && it.episode != null && (it.season ?: 0) > 0 }
         fun isFutureRelease(raw: String?): Boolean = isEpisodeReleaseAired(raw) == false
@@ -2444,6 +2449,7 @@ private suspend fun HomeViewModel.resolveMetaForProgress(
             cwMetaNegativeCacheTimestamps.remove(cacheKey)
         }
     }
+    randomHomeVisit.update { it + 1 }
     return resolved
 }
 

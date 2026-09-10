@@ -72,6 +72,7 @@ data class HomeUiState(
 
 @Immutable
 sealed class ContinueWatchingItem {
+    abstract val randomPlayback: Boolean
     @Immutable
     data class InProgress(
         val progress: WatchProgress,
@@ -80,11 +81,12 @@ sealed class ContinueWatchingItem {
         val episodeImdbRating: Float? = null,
         val genres: List<String> = emptyList(),
         val releaseInfo: String? = null,
-        val contentLanguage: String? = null
+        val contentLanguage: String? = null,
+        override val randomPlayback: Boolean = false
     ) : ContinueWatchingItem()
 
     @Immutable
-    data class NextUp(val info: NextUpInfo) : ContinueWatchingItem()
+    data class NextUp(val info: NextUpInfo, override val randomPlayback: Boolean = false) : ContinueWatchingItem()
 }
 
 @Immutable

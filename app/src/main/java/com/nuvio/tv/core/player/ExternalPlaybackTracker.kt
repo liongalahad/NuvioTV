@@ -174,6 +174,9 @@ class ExternalPlaybackTracker @Inject constructor(
     private val watchProgressRepository: WatchProgressRepository,
     private val trackingScrobbleCoordinator: TrackingScrobbleCoordinator,
     private val metaRepository: MetaRepository,
+    private val randomEpisodeDataStore: com.nuvio.tv.data.local.RandomEpisodeDataStore,
+    private val randomEpisodeSelector: com.nuvio.tv.domain.model.RandomEpisodeSelector,
+    private val watchedItemsPreferences: com.nuvio.tv.data.local.WatchedItemsPreferences,
     private val playerSettingsDataStore: PlayerSettingsDataStore,
     private val skipIntroRepository: SkipIntroRepository,
     private val cloudLibraryRepository: CloudLibraryRepository,
@@ -877,6 +880,28 @@ class ExternalPlaybackTracker @Inject constructor(
         }
     }
 
+    private var randomNextKey: String? = null
+    private val randomNextSelection = com.nuvio.tv.domain.model.RandomEpisodeSelector.Selection()
+
+    suspend fun resolveNextEpisodeSnapshot(metadata: ExternalPlaybackMetadata, videos: List<Video>): ExternalNextEpisodeSnapshot {
+        val settings = randomEpisodeDataStore.settingsForProfile(metadata.profileId).first()
+        if (!settings.isEnabled(metadata.contentId, metadata.contentType)) {
+            randomNextSelection.clear()
+            return resolveExternalNextEpisodeSnapshot(videos, metadata.season, metadata.episode)
+        }
+        val key = "${metadata.profileId}:${metadata.contentId}:${metadata.season}:${metadata.episode}"
+        if (randomNextKey != key) { randomNextKey = key; randomNextSelection.clear() }
+        val progress = watchProgressRepository.getAllEpisodeProgress(metadata.contentId, metadata.profileId).first()
+        val watched = watchedItemsPreferences.getWatchedEpisodesForContent(metadata.contentId, metadata.profileId).first() +
+            progress.filterValues { it.isCompleted() }.keys + videos.filter {
+                it.episode != null && watchProgressRepository.isWatchedByVideoId(it.id, it.episode) == true
+            }.mapNotNull { v -> v.season?.let { s -> v.episode?.let { e -> s to e } } }
+        val current = metadata.season?.let { s -> metadata.episode?.let { e -> s to e } }
+        val next = randomEpisodeSelector.select(metadata.profileId, metadata.contentId, videos,
+            metadata.contentId in settings.unwatchedShows, watched, randomNextSelection, current)
+        return ExternalNextEpisodeSnapshot(true, next?.id, next?.season, next?.episode)
+    }
+
     private suspend fun resolveNextEpisodeSnapshot(
         metadata: ExternalPlaybackMetadata
     ): ExternalNextEpisodeSnapshot {
@@ -887,11 +912,7 @@ class ExternalPlaybackTracker @Inject constructor(
         }
         val meta = (result as? NetworkResult.Success)?.data
             ?: return ExternalNextEpisodeSnapshot.Unknown
-        return resolveExternalNextEpisodeSnapshot(
-            videos = meta.videos,
-            currentSeason = metadata.season,
-            currentEpisode = metadata.episode
-        )
+        return resolveNextEpisodeSnapshot(metadata, meta.videos)
     }
 
     // True on a natural end (end_by != "user"), or for players without end_by once the

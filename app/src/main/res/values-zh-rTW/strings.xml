@@ -2831,4 +2831,9 @@
     <string name="stream_test_video_bitrate">平均影片位元率：%1$s</string>
     <string name="stream_test_error_connection">連線失敗。上次播放的流連結可能已過期或無法存取。請重新播放影片並重試。</string>
 
+    <string name="random_episode_pool">包含的單集</string>
+    <string name="random_episode_setting">啟用各影集的隨機播放</string>
+    <string name="random_episode_setting_desc">在各影集的詳細資訊頁面顯示隨機播放開關，並儲存各自的選擇。</string>
+    <string name="random_episode_all">全部</string>
+    <string name="random_episode_unwatched">僅未觀看</string>
 </resources>

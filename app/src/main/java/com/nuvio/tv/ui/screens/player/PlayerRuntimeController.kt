@@ -1,5 +1,9 @@
 package com.nuvio.tv.ui.screens.player
 
+import com.nuvio.tv.data.local.RandomEpisodeDataStore
+import com.nuvio.tv.data.local.RandomEpisodeSettings
+import com.nuvio.tv.domain.model.RandomEpisodeSelector
+
 import android.app.Activity
 import android.content.Context
 import android.media.AudioDeviceCallback
@@ -82,6 +86,8 @@ class PlayerRuntimeController(
     internal val streamBadgeSettingsDataStore: StreamBadgeSettingsDataStore,
     internal val bingeGroupCacheDataStore: BingeGroupCacheDataStore,
     internal val layoutPreferenceDataStore: com.nuvio.tv.data.local.LayoutPreferenceDataStore,
+    internal val randomEpisodeDataStore: RandomEpisodeDataStore,
+    internal val randomEpisodeSelector: RandomEpisodeSelector,
     internal val watchedItemsPreferences: com.nuvio.tv.data.local.WatchedItemsPreferences,
     internal val trackPreferenceDataStore: com.nuvio.tv.data.local.TrackPreferenceDataStore,
     internal val audioDelayRouteDataStore: AudioDelayRouteDataStore,
@@ -414,6 +420,9 @@ class PlayerRuntimeController(
     /** Back buffer (ms) the user configured, captured at build to restore once DV7 status is known. */
     internal var configuredBackBufferMs: Int = 0
     internal var metaVideos: List<Video> = emptyList()
+    internal var randomEpisodeSettings = RandomEpisodeSettings(enabled = false)
+    internal var randomEpisodeCurrent: Pair<Int, Int>? = null
+    internal val randomEpisodeSelection = RandomEpisodeSelector.Selection()
     internal var cloudPlaybackContext: CloudLibraryPlaybackContext? =
         cloudPlaybackSessionStore.load(cloudSessionToken)
     internal var metaGenres: List<String> = emptyList()
