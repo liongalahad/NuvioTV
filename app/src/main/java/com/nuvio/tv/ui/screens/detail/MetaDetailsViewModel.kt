@@ -122,13 +122,20 @@ class MetaDetailsViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, MetaDetailsUiState())
 
     fun toggleRandomEpisode() {
-        val id = _uiState.value.meta?.id ?: return
-        viewModelScope.launch { randomEpisodeDataStore.toggleShow(id) }
+        val id = _uiState.value.meta?.id?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            val enabled = randomEpisodeDataStore.toggleShow(id)
+            showMessage(localizedContext.getString(if (enabled)
+                R.string.random_episode_enabled_message else R.string.random_episode_disabled_message))
+        }
     }
 
     fun selectRandomEpisodePool(unwatchedOnly: Boolean) {
-        val id = _uiState.value.meta?.id ?: return
-        viewModelScope.launch { randomEpisodeDataStore.selectPool(id, unwatchedOnly) }
+        val id = _uiState.value.meta?.id?.takeIf { it.isNotBlank() } ?: return
+        viewModelScope.launch {
+            randomEpisodeDataStore.selectPool(id, unwatchedOnly)
+            showMessage(localizedContext.getString(R.string.random_episode_enabled_message))
+        }
     }
 
     private val _posterCardCornerRadiusDp = MutableStateFlow(12)

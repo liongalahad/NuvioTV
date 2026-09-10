@@ -40,12 +40,13 @@ class RandomEpisodeDataStore @Inject constructor(
         store(profileManager.activeProfileId.value).edit { it[enabledKey] = enabled }
     }
 
-    suspend fun toggleShow(contentId: String) {
-        if (contentId.isBlank()) return
-        store(profileManager.activeProfileId.value).edit {
+    suspend fun toggleShow(contentId: String): Boolean {
+        if (contentId.isBlank()) return false
+        val updated = store(profileManager.activeProfileId.value).edit {
             val shows = it[showsKey].orEmpty()
             it[showsKey] = if (contentId in shows) shows - contentId else shows + contentId
         }
+        return contentId in updated[showsKey].orEmpty()
     }
 
     suspend fun selectPool(contentId: String, unwatchedOnly: Boolean) {
